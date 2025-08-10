@@ -1,0 +1,89 @@
+## Booking Information:
+
+hotel: Type of hotel (Resort Hotel or City Hotel).
+
+**is_canceled: Indicates if the booking was canceled (1) or not (0).**
+
+lead_time: Number of days between the booking date and the arrival date.
+
+arrival_date_year: Year of arrival date.
+
+arrival_date_month: Month of arrival date.
+
+arrival_date_week_number: Week number of arrival date.
+
+arrival_date_day_of_month: Day of the month of arrival date.
+
+stays_in_weekend_nights: Number of weekend nights (Saturday or Sunday) the guest stayed or booked to stay.
+
+stays_in_week_nights: Number of week nights (Monday to Friday) the guest stayed or booked to stay.
+
+adults: Number of adults.
+
+children: Number of children.
+
+babies: Number of babies.
+
+meal: Type of meal booked.
+
+country: Country of origin of the guest.
+
+market_segment: Market segment designation.
+
+distribution_channel: Booking distribution channel.
+
+is_repeated_guest: Indicates if the guest is a repeated guest (1) or not (0).
+
+previous_cancellations: Number of previous bookings that were canceled by the customer.
+
+previous_bookings_not_canceled: Number of previous bookings not canceled by the customer.
+
+reserved_room_type: Code of room type reserved.
+
+assigned_room_type: Code of room type assigned.
+
+booking_changes: Number of changes made to the booking.
+
+deposit_type: Type of deposit made for the booking.
+
+agent: ID of the travel agency that made the booking.
+
+days_in_waiting_list: Number of days the booking was in the waiting list.
+
+customer_type: Type of customer.
+
+**adr: Average Daily Rate (total revenue divided by the number of nights).**
+
+required_car_parking_spaces: Number of car parking spaces required by the customer.
+
+total_of_special_requests: Number of special requests made by the customer.
+
+reservation_status: Last reservation status.
+
+reservation_status_date: Date at which the last status was set.
+
+##Economic Indicators:
+
+MO_YR: Month and year.
+
+CPI_AVG: Consumer Price Index (CPI) average.
+
+INFLATION: Inflation rate.
+
+INFLATION_CHG: Change in inflation.
+
+CSMR_SENT: Consumer Sentiment Index.
+
+UNRATE: Unemployment rate.
+
+INTRSRT: Interest rate.
+
+GDP: Gross Domestic Product.
+
+FUEL_PRCS: Fuel prices.
+
+CPI_HOTELS: Consumer Price Index for Hotels.
+
+US_GINI: Gini coefficient for the US (measure of income inequality).
+
+DIS_INC: Disposable income.
