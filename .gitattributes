@@ -1,0 +1,8 @@
+rf_model.pkl filter=lfs diff=lfs merge=lfs -text
+hotel_bookin_İşlenmiş_2.csv filter=lfs diff=lfs merge=lfs -text
+hotel_bookin_İşlenmiş.csv filter=lfs diff=lfs merge=lfs -text
+hotel_bookings_preprocessed.csv filter=lfs diff=lfs merge=lfs -text
+hotel_bookings_raw.csv filter=lfs diff=lfs merge=lfs -text
+hotel_bookings_visualization.csv filter=lfs diff=lfs merge=lfs -text
+X_classification.csv filter=lfs diff=lfs merge=lfs -text
+X_regression.csv filter=lfs diff=lfs merge=lfs -text
