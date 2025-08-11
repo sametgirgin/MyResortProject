@@ -612,36 +612,86 @@ elif page == "❌ Cancellation Prediction":
     st.header("❌ Rezervasyon İptal Tahmini")
     
     st.markdown("""
-    ### 💻 Model Oluşturma: Veriden Tahmine
+    #### 💻 Model Oluşturma: Veriden Tahmine
     Veriler titizlikle hazırlandıktan ve özellik mühendisliği yapıldıktan sonra, bir sonraki adım tahmin modelini oluşturmaktı. Buradaki amaç, bir rezervasyonun iptal edilme olasılığını doğru bir şekilde tahmin edebilecek bir sınıflandırıcıyı eğitmektir.
 
-    ### 🚀 Temel Modeller ve Performans Değerlendirmesi
+    #### 🚀 Temel Modeller ve Performans Değerlendirmesi
     Nihai bir modele karar vermeden önce, en iyi performansı gösteren algoritmayı bulmak için çeşitli yaygın makine öğrenimi sınıflandırma algoritmaları değerlendirildi. Her modelin performansı, bu tür dengesiz sınıflandırma problemlerinde anahtar bir ölçüt olan ROC AUC kullanılarak ölçüldü.
 
-    **Test Edilen Temel Modeller:** Lojistik Regresyon, KNN, SVM, Karar Ağacı, Rastgele Orman, AdaBoost, Gradyan Artırma (Gradient Boosting), XGBoost ve LightGBM.
+    **Test Edilen Temel Modeller:** Lojistik Regresyon, KNN, Karar Ağacı, CART, XGBoost ve LightGBM.
 
-    **Model Seçimi:** Çapraz doğrulama (cross-validation) sonuçlarına göre, Gradyan Artırma Makinesi (GBM) üstün performans gösterdi.
+    **Model Seçimi:** Çapraz doğrulama (cross-validation) sonuçlarına göre, RF üstün performans gösterdi.
 
-    ---
-    ### ⚙️ Optimal Performans için Hiperparametre Ayarı
+    #### ⚙️ Optimal Performans için Hiperparametre Ayarı
     GBM modelinin başlangıç versiyonu, daha da iyi sonuçlar elde etmek için ince ayar yapıldı. Hiperparametre ayarı adı verilen bu süreç, modelin performansını en üst düzeye çıkaran kombinasyonu bulmak için parametrelerinin (learning_rate, max_depth, n_estimators, subsample gibi) farklı konfigürasyonlarını sistematik olarak test etmeyi içerir.
 
     **Ayar Tekniği:** Belirlenen bir parametre ızgarasını (grid) kapsamlı bir şekilde arayan bir Grid Search kullanıldı.
 
-    **Nihai Model:** Optimize edilmiş GBM modeli, performans metriklerinde (doğruluk, F1-skoru ve ROC AUC) önemli bir artış göstererek etkinliğini doğruladı.
+    **Nihai Model:** Optimize edilmiş Random Forest modeli, performans metriklerinde (doğruluk, F1-skoru ve ROC AUC) önemli bir artış göstererek etkinliğini doğruladı.
 
-    ---
-    ### 📊 Özellik Önem Derecesi: En Çok Ne Önemli?
+    """,unsafe_allow_html=True)
+    
+    # Add this code to the "❌ Cancellation Prediction" section in resort.py
+
+    #st.markdown("Model Performans Karşılaştırması (ROC AUC)")
+
+    # Model performans verileri
+    model_perf_data = {
+        "Model": ["KNN", "CART", "RF", "XGBoost", "LightGBM"],
+        "ROC AUC (Before)": [0.5907, 0.5645, 0.7092, 0.7583, 0.7728],
+        "ROC AUC (After)": [0.6629, 0.7026, 0.8361, 0.8230, 0.7823]
+    }
+    model_perf_df = pd.DataFrame(model_perf_data)
+
+    # Plotly bar chart
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=model_perf_df["Model"],
+        y=model_perf_df["ROC AUC (Before)"],
+        name="ROC AUC (Before)",
+        marker_color='lightblue'
+    ))
+    fig.add_trace(go.Bar(
+        x=model_perf_df["Model"],
+        y=model_perf_df["ROC AUC (After)"],
+        name="ROC AUC (After)",
+        marker_color='royalblue'
+    ))
+    fig.update_layout(
+        barmode='group',
+        title="Model ROC AUC Karşılaştırması",
+        xaxis_title="Model",
+        yaxis_title="ROC AUC",
+        template="plotly_white"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    
+    st.markdown("""
+    ### 📊 Özellik Önem Derecesi: İptale en çok katkı sağlayan faktörler nelerdir?
     Modelin hangi özelliklere güvendiğini anlamak, yorumlanabilirlik açısından çok önemlidir. İptalleri tahmin etmede en etkili faktörleri belirlemek için modelin özellik önem derecesi analizi yapıldı.
 
     Bu görselleştirme, total_guests, lead_time, adr gibi özelliklerin ve yeni oluşturulan TrustedAgent ve Country_Risk değişkenlerinin, otel rezervasyon iptallerini tahmin etmek için en güçlü göstergeler arasında yer aldığını ortaya koymaktadır.
-
-    ---
-    ### 💾 Dağıtım ve Ölçeklenebilirlik
-    Pratik uygulama için, nihai optimize edilmiş GBM modeli ve veri ölçekleyici (gbm_model.pkl ve scaler.pkl) bir dosyaya kaydedildi. Bu, modelin yeniden eğitilmesine gerek kalmadan yeni, gerçek zamanlı rezervasyon verileri üzerinde tahmin yapmak için kolayca yüklenip kullanılabilmesini sağlar.
+    """,unsafe_allow_html=True)
+    
+    st.markdown("""
+    <b>Kullanılan Model:</b> <span style="color:#2980b9;">Random Forest Classifier</span><br>
+    <b>Model, rezervasyonun iptal edilip edilmeyeceğini tahmin etmek için eğitilmiştir.</b>
     """, unsafe_allow_html=True)
 
-    
+    # Özellik önem grafiğini göster
+    #st.markdown("Model Özellik Önem Grafiği")
+    fig = plotly_feature_importance_streamlit(rf_model, X_classification, title="Random Forest Classifier Feature Importance")
+    st.plotly_chart(fig, use_container_width=True)
+
+
+    st.markdown("""
+    ### 💾 Dağıtım ve Ölçeklenebilirlik
+    Pratik uygulama için, nihai optimize edilmiş Random Forest modeli ve veri ölçekleyici (rf_model.pkl ve scaler.pkl) bir dosyaya kaydedildi. Bu, modelin yeniden eğitilmesine gerek kalmadan yeni, gerçek zamanlı rezervasyon verileri üzerinde tahmin yapmak için kolayca yüklenip kullanılabilmesini sağlar.
+    """, unsafe_allow_html=True)
+
+
+
+
     X_columns = [
         "lead_time", "is_repeated_guest", "adr", "INFLATION_CHG", "CSMR_SENT", "TrustedAgent", "PartnerAgent",
         "total_guests", "has_children", "total_stay_nights", "staying_on_weekends", "Country_Risk",
@@ -755,16 +805,6 @@ elif page == "❌ Cancellation Prediction":
             st.success(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}")
         else:
             st.error(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}") 
-    
-    st.markdown("""
-    <b>Kullanılan Model:</b> <span style="color:#2980b9;">Random Forest Classifier</span><br>
-    <b>Model, rezervasyonun iptal edilip edilmeyeceğini tahmin etmek için eğitilmiştir.</b>
-    """, unsafe_allow_html=True)
-
-    # Özellik önem grafiğini göster
-    #st.markdown("Model Özellik Önem Grafiği")
-    fig = plotly_feature_importance_streamlit(rf_model, X_classification, title="Random Forest Classifier Feature Importance")
-    st.plotly_chart(fig, use_container_width=True)
 
 #Özellik Müh.
 elif page == "🛠️ Feature Engineering":
