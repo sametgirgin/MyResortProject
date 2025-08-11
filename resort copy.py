@@ -13,7 +13,8 @@ pd.set_option('display.width', 500)
 
 
 df = pd.read_csv("hotel_bookings_preprocessed.csv")
-
+X_classification = pd.read_csv("X_classification.csv")
+X_regression = pd.read_csv("X_regression.csv")
 df.head()
 # Convert 'is_canceled' to boolean
 df['is_canceled'] = df['is_canceled'].astype(bool)
@@ -31,7 +32,9 @@ page = st.sidebar.radio("Go to", [
     "📊 EDA",
     "🛠️ Feature Engineering",
     "❌ Cancellation Prediction",
-    "💰 ADR Prediction"
+    "💰 ADR Prediction",
+    "💡 Insights and Recommendations",
+    "📑 Appendix"
 ])
 
 def plotly_time_series(df, date_col, value_col=None, agg='count', title='', ylabel='', color='blue'):
@@ -182,7 +185,27 @@ def plotly_box_by_cancel(df, column, title, ylabel):
     )
     st.plotly_chart(fig)
 
-
+# Feature Importance Chart
+def plotly_feature_importance_streamlit(model, features, title ="Feature Importance", num=15):
+    feature_imp = pd.DataFrame({
+        'Feature': features.columns,
+        'Importance': model.feature_importances_
+    })
+    feature_imp = feature_imp.sort_values(by="Importance", ascending=False).head(num)
+    fig = px.bar(
+        feature_imp,
+        x="Importance",
+        y="Feature",
+        orientation="h",
+        title=title,
+        color="Importance",
+        color_continuous_scale="Blues",
+        width=900,
+        height=600
+    )
+    fig.update_layout(yaxis=dict(autorange="reversed"))
+    return fig
+#İş Problemi
 if page == "📈 Business Problem":
 
     st.image("hotel.png", use_container_width=True)
@@ -243,7 +266,7 @@ if page == "📈 Business Problem":
         """,
         unsafe_allow_html=True
     )
-
+#Data Görselleştirme
 elif page == "📊 EDA":
     st.header("📊 Keşifçi Veri Analizi")
 
@@ -459,16 +482,166 @@ elif page == "📊 EDA":
             title="Cancellation Rate by Country"
         )
         st.plotly_chart(fig)
-        
+#ADR Prediction      
 elif page == "💰 ADR Prediction":
-    st.header("💰 ADR Prediction")
-    st.write("Prototype: Predict ADR using regression models.")
-    st.write("Add regression model and prediction UI here.")
-    st.write("Example features: lead_time, adults, children, market_segment.")
+    st.header("💰 Ortalama Günlük Ücret Tahmini")
 
+    from xgboost import XGBRegressor
+    final_xgb_model = XGBRegressor()
+    final_xgb_model.load_model("final_xgb_model.json")
+ 
+    st.markdown("Aşağıdaki formu doldurarak ADR tahmini alabilirsiniz.")
+
+    #final_xgb_model = joblib.load("final_xgb_model.pkl")
+
+    # Sol sütun
+    col1, col2 = st.columns(2)
+
+    with col1:
+        hotel_type = st.selectbox("Otel Tipi", options=["Resort", "City"])
+        hotel_1 = 1 if hotel_type == "Resort" else 0
+        lead_time = st.number_input("Lead Time (gün)", min_value=0, value=10)
+        stays_in_weekend_nights = st.number_input("Hafta Sonu Gece Sayısı", min_value=0, value=1)
+        stays_in_week_nights = st.number_input("Hafta İçi Gece Sayısı", min_value=0, value=2)
+        New_total_guests = st.number_input("Toplam Misafir Sayısı", min_value=1, value=2)
+        INFLATION = st.number_input("Enflasyon (%)", value=2.5)
+        GDP = st.number_input("Kişi Başı GSYİH ($)", value=18000.0)
+        New_has_children = st.selectbox("Çocuk veya Bebek Var mı?", options=["Hayır", "Evet"])
+        New_has_children_val = 1 if New_has_children == "Evet" else 0
+
+    with col2:
+        season = st.selectbox("Mevsim", options=["İlkbahar", "Yaz", "Kış", "Sonbahar"])
+        New_season_Spring = 1 if season == "İlkbahar" else 0
+        New_season_Summer = 1 if season == "Yaz" else 0
+        New_season_Autumn = 1 if season == "Sonbahar" else 0
+        New_season_Winter = 1 if season == "Kış" else 0
+
+        meal = st.selectbox("Yemek Tipi", options=["A (Yarım Pansiyon)", "B (Kahvaltı)", "C (Tam Pansiyon)"])
+        New_meal_class_A = 1 if meal == "A (Yarım Pansiyon)" else 0
+        New_meal_class_B = 1 if meal == "B (Kahvaltı)" else 0
+        New_meal_class_C = 1 if meal == "C (Tam Pansiyon)" else 0
+
+        market_segment = st.selectbox("Pazar Segmenti", options=["A", "B", "C", "D"])
+        New_market_segment_grouped_A = 1 if market_segment == "A" else 0
+        New_market_segment_grouped_B = 1 if market_segment == "B" else 0
+        New_market_segment_grouped_C = 1 if market_segment == "C" else 0
+        New_market_segment_grouped_D = 1 if market_segment == "D" else 0
+
+        room_class = st.selectbox("Oda Sınıfı", options=["A", "B", "C", "D"])
+        New_room_class_A = 1 if room_class == "A" else 0
+        New_room_class_B = 1 if room_class == "B" else 0
+        New_room_class_C = 1 if room_class == "C" else 0
+        New_room_class_D = 1 if room_class == "D" else 0
+
+        deposit_type = st.selectbox("Depozito Tipi", options=["İade Yok", "İadeli"])
+        deposit_type_Non_Refund = 1 if deposit_type == "İade Yok" else 0
+        deposit_type_Refundable = 1 if deposit_type == "İadeli" else 0
+
+        agent_class = st.selectbox("Acente Sınıfı", options=["E", "D", "C", "B", "A"])
+        New_agent_class_E = 1 if agent_class == "E" else 0
+        New_agent_class_D = 1 if agent_class == "D" else 0
+        New_agent_class_C = 1 if agent_class == "C" else 0
+        New_agent_class_B = 1 if agent_class == "B" else 0
+        New_agent_class_A = 1 if agent_class == "A" else 0
+
+        New_customer_type_1 = st.selectbox("Müşteri Tipi (Grup/Sözleşmeli mi?)", options=["Hayır", "Evet"])
+        New_customer_type_1_val = 1 if New_customer_type_1 == "Evet" else 0
+
+    # Toplam Konaklama Gecesi otomatik hesaplanıyor
+    New_total_stay = stays_in_weekend_nights + stays_in_week_nights
+
+    input_dict = {
+        "lead_time": lead_time,
+        "stays_in_weekend_nights": stays_in_weekend_nights,
+        "stays_in_week_nights": stays_in_week_nights,
+        "New_total_guests": New_total_guests,
+        "New_total_stay": New_total_stay,
+        "INFLATION": INFLATION,
+        "GDP": GDP,
+        "New_has_children": New_has_children_val,
+        "hotel_1": hotel_1,
+        "New_season_Spring": New_season_Spring,
+        "New_season_Summer": New_season_Summer,
+        "New_season_Winter": New_season_Winter,
+        "New_meal_class_B": New_meal_class_B,
+        "New_meal_class_C": New_meal_class_C,
+        "New_market_segment_grouped_B": New_market_segment_grouped_B,
+        "New_market_segment_grouped_C": New_market_segment_grouped_C,
+        "New_market_segment_grouped_D": New_market_segment_grouped_D,
+        "New_room_class_B": New_room_class_B,
+        "New_room_class_C": New_room_class_C,
+        "New_room_class_D": New_room_class_D,
+        "deposit_type_Non Refund": deposit_type_Non_Refund,
+        "deposit_type_Refundable": deposit_type_Refundable,
+        "New_agent_class_D": New_agent_class_D,
+        "New_agent_class_C": New_agent_class_C,
+        "New_agent_class_B": New_agent_class_B,
+        "New_agent_class_A": New_agent_class_A,
+        "New_customer_type_1": New_customer_type_1_val
+    }
+
+    if st.button("ADR Tahmini Yap"):
+        input_df = pd.DataFrame([input_dict])
+
+        # Modelin fit edildiği X tablosunun feature isimlerini yükle
+        X_columns = joblib.load("adr_feature_names.pkl")  # Bu dosya X.columns.tolist() ile kaydedilmiş olmalı
+
+        # Eksik olan feature'ları 0 ile doldur, sıralamayı garanti et
+        for col in X_columns:
+            if col not in input_df.columns:
+                input_df[col] = 0
+        input_df = input_df[X_columns]  # Sıralamayı garanti et
+
+        scaler_adr = joblib.load("scaler_adr.pkl")
+        input_scaled = scaler_adr.transform(input_df)
+        prediction = final_xgb_model.predict(input_scaled)
+        st.success(f"Tahmin edilen ADR: {prediction[0]:.2f}")   
+    st.markdown("""
+    <b>Kullanılan Model:</b> <span style="color:#27ae60;">XGBoost Regressor</span><br>
+    <b>Model, rezervasyonun ortalama günlük fiyatını (ADR) tahmin etmek için eğitilmiştir.</b><br><br>
+    """, unsafe_allow_html=True)
+    
+    # Özellik önem grafiğini göster
+    #st.markdown("Model Özellik Önem Grafiği")
+    fig = plotly_feature_importance_streamlit(final_xgb_model, X_regression, title="XGBoost Regressor Feature Importance")
+    st.plotly_chart(fig, use_container_width=True)
+
+     
+#İptal tahmini
 elif page == "❌ Cancellation Prediction":
     st.header("❌ Rezervasyon İptal Tahmini")
+    
+    st.markdown("""
+    ### 💻 Model Oluşturma: Veriden Tahmine
+    Veriler titizlikle hazırlandıktan ve özellik mühendisliği yapıldıktan sonra, bir sonraki adım tahmin modelini oluşturmaktı. Buradaki amaç, bir rezervasyonun iptal edilme olasılığını doğru bir şekilde tahmin edebilecek bir sınıflandırıcıyı eğitmektir.
 
+    ### 🚀 Temel Modeller ve Performans Değerlendirmesi
+    Nihai bir modele karar vermeden önce, en iyi performansı gösteren algoritmayı bulmak için çeşitli yaygın makine öğrenimi sınıflandırma algoritmaları değerlendirildi. Her modelin performansı, bu tür dengesiz sınıflandırma problemlerinde anahtar bir ölçüt olan ROC AUC kullanılarak ölçüldü.
+
+    **Test Edilen Temel Modeller:** Lojistik Regresyon, KNN, SVM, Karar Ağacı, Rastgele Orman, AdaBoost, Gradyan Artırma (Gradient Boosting), XGBoost ve LightGBM.
+
+    **Model Seçimi:** Çapraz doğrulama (cross-validation) sonuçlarına göre, Gradyan Artırma Makinesi (GBM) üstün performans gösterdi.
+
+    ---
+    ### ⚙️ Optimal Performans için Hiperparametre Ayarı
+    GBM modelinin başlangıç versiyonu, daha da iyi sonuçlar elde etmek için ince ayar yapıldı. Hiperparametre ayarı adı verilen bu süreç, modelin performansını en üst düzeye çıkaran kombinasyonu bulmak için parametrelerinin (learning_rate, max_depth, n_estimators, subsample gibi) farklı konfigürasyonlarını sistematik olarak test etmeyi içerir.
+
+    **Ayar Tekniği:** Belirlenen bir parametre ızgarasını (grid) kapsamlı bir şekilde arayan bir Grid Search kullanıldı.
+
+    **Nihai Model:** Optimize edilmiş GBM modeli, performans metriklerinde (doğruluk, F1-skoru ve ROC AUC) önemli bir artış göstererek etkinliğini doğruladı.
+
+    ---
+    ### 📊 Özellik Önem Derecesi: En Çok Ne Önemli?
+    Modelin hangi özelliklere güvendiğini anlamak, yorumlanabilirlik açısından çok önemlidir. İptalleri tahmin etmede en etkili faktörleri belirlemek için modelin özellik önem derecesi analizi yapıldı.
+
+    Bu görselleştirme, total_guests, lead_time, adr gibi özelliklerin ve yeni oluşturulan TrustedAgent ve Country_Risk değişkenlerinin, otel rezervasyon iptallerini tahmin etmek için en güçlü göstergeler arasında yer aldığını ortaya koymaktadır.
+
+    ---
+    ### 💾 Dağıtım ve Ölçeklenebilirlik
+    Pratik uygulama için, nihai optimize edilmiş GBM modeli ve veri ölçekleyici (gbm_model.pkl ve scaler.pkl) bir dosyaya kaydedildi. Bu, modelin yeniden eğitilmesine gerek kalmadan yeni, gerçek zamanlı rezervasyon verileri üzerinde tahmin yapmak için kolayca yüklenip kullanılabilmesini sağlar.
+    """, unsafe_allow_html=True)
+
+    
     X_columns = [
         "lead_time", "is_repeated_guest", "adr", "INFLATION_CHG", "CSMR_SENT", "TrustedAgent", "PartnerAgent",
         "total_guests", "has_children", "total_stay_nights", "staying_on_weekends", "Country_Risk",
@@ -582,7 +755,18 @@ elif page == "❌ Cancellation Prediction":
             st.success(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}")
         else:
             st.error(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}") 
+    
+    st.markdown("""
+    <b>Kullanılan Model:</b> <span style="color:#2980b9;">Random Forest Classifier</span><br>
+    <b>Model, rezervasyonun iptal edilip edilmeyeceğini tahmin etmek için eğitilmiştir.</b>
+    """, unsafe_allow_html=True)
 
+    # Özellik önem grafiğini göster
+    #st.markdown("Model Özellik Önem Grafiği")
+    fig = plotly_feature_importance_streamlit(rf_model, X_classification, title="Random Forest Classifier Feature Importance")
+    st.plotly_chart(fig, use_container_width=True)
+
+#Özellik Müh.
 elif page == "🛠️ Feature Engineering":
     st.header("🛠️ Veri Ön İşleme ve Özellik Mühendisliği")
 
@@ -608,12 +792,12 @@ elif page == "🛠️ Feature Engineering":
     
     st.header("3️⃣ Yeni Özelliklerin Oluşturulması")
     st.markdown("""
-    ##### 🤝 Acente ve Ülke Riski
+    ##### 🤝 Acente ve Ülkelerin Gruplandırılması
     - Risk ve ortaklık seviyelerini yakalamak için yeni kategorik özellikler oluşturuldu:
-        - **TrustedAgent:** Acenteleri, geçmiş iptal oranlarına göre 4 seviyeye ayırdık (örneğin, düşük iptal oranı daha güvenilir bir acenteye işaret eder).
-        - **PartnerAgent:** Acenteleri, rezervasyon hacimlerine göre 4 seviyeye ayırdık (örneğin, yüksek hacim güçlü bir ortaklığa işaret eder).
-        - **Ülke_Riski:** Her bir ülkenin ortalama iptal oranına göre bir risk puanı atandı.
-
+        - **Trusted Agent:** Acenteleri, geçmiş iptal oranlarına göre 4 seviyeye ayırdık (örneğin, düşük iptal oranı daha güvenilir bir acenteye işaret eder).
+        - **Partner Agent:** Acenteleri, rezervasyon hacimlerine göre 4 seviyeye ayırdık (örneğin, yüksek hacim güçlü bir ortaklığa işaret eder).
+        - **Ülke Riski:** Her bir ülkenin ortalama iptal oranına göre bir risk puanı atandı.
+    - ADR tahmininde ülke ve acenteler günlük ortalama ücret dağılımlarına göre gruplandırıldı.
     ##### 👨‍👩‍👧‍👦 Misafir ve Konaklama Özellikleri
     - Her bir rezervasyon hakkında daha bütünsel bir bakış açısı sunmak için ek sezgisel özellikler oluşturuldu:
         - **total_guest:** Bir rezervasyondaki yetişkin, çocuk ve bebek sayılarının toplamı.
@@ -663,7 +847,41 @@ elif page == "🛠️ Feature Engineering":
 
     st.success("✅ Feature Engineering süreci tamamlandı!")
 
+#İçgörüler ve Öneriler
+elif page == "💡 Insights and Recommendations":
+    st.header("💡 Bulgular ve İş Önerileri")
 
+    st.markdown("""
+    ### Key Insights from Analysis
+
+    - **High Cancellation Risk:** Certain market segments and countries show significantly higher cancellation rates. Proactive communication and flexible policies may reduce risk.
+    - **Seasonal Trends:** Bookings and cancellations vary by season. Summer months have higher booking volumes, but also increased cancellation risk.
+    - **ADR Optimization:** Dynamic pricing strategies based on lead time, guest profile, and season can help maximize revenue.
+    - **Guest Profile:** Families (with children) tend to book longer stays and are less likely to cancel compared to solo travelers.
+    - **Special Requests:** Bookings with special requests have a lower cancellation rate, indicating higher commitment.
+
+    ### Recommendations
+
+    1. **Targeted Offers:** Provide special incentives for guests from high-risk countries or segments to reduce cancellations.
+    2. **Flexible Policies:** Consider more flexible cancellation policies during low-demand periods to attract bookings.
+    3. **Dynamic Pricing:** Use ADR prediction model outputs to adjust prices based on demand, season, and guest characteristics.
+    4. **Monitor Lead Time:** Closely monitor bookings with short lead times, as these are more likely to be canceled.
+    5. **Leverage Feature Importance:** Focus marketing and operational efforts on the most influential features identified by the models.
+
+    ---
+    <span style="color:#2980b9;">For further details, see the EDA and Feature Engineering tabs.</span>
+    """, unsafe_allow_html=True)
+
+elif page == "📑 Appendix":
+    st.header("📑 Appendix")
+
+    st.markdown("### Country & Country Risk Table")
+
+    # Tabloyu yükle
+    df = pd.read_csv("hotel_bookings_preprocessed.csv")
+    country_table = df[["country", "Country_Risk"]].drop_duplicates().sort_values("Country_Risk").reset_index(drop=True)
+
+    st.dataframe(country_table, use_container_width=True)
 
 
 
