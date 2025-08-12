@@ -31,7 +31,7 @@ page = st.sidebar.radio("Go to", [
     "📈 Business Problem" ,
     "📊 EDA",
     "🛠️ Feature Engineering",
-    "❌ Cancellation Prediction",
+    "📅❌ Cancellation Prediction",
     "💰 ADR Prediction",
     "💡 Insights and Recommendations",
     "📑 Appendix"
@@ -486,9 +486,57 @@ elif page == "📊 EDA":
 elif page == "💰 ADR Prediction":
     st.header("💰 Ortalama Günlük Ücret Tahmini")
 
-    st.markdown("Aşağıdaki formu doldurarak ADR tahmini alabilirsiniz.")
+    st.markdown("""
+    <div style="background-color:#f9e79f; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>Giriş: Problem ve Amaç</b><br>
+        Bu bölümde otellerimizin kârlılığını artırmak amacıyla geliştirdiğimiz, ortalama günlük oda fiyatı (ADR) tahmini yapan makine öğrenmesi uygulamamızdan bahsedeceğim. Pazarın dinamiklerine göre doğru fiyatlandırma yapmak, doluluk oranını ve geliri doğrudan etkileyen kritik bir faktördür.
+    </div>
+    <div style="background-color:#aed6f1; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>Veri Analizi ve Hazırlık</b><br>
+        Projemize, geniş bir otel rezervasyon veri setini detaylı bir şekilde analiz ederek başladık. Bu süreçte önemli özellik mühendisliği adımları gerçekleştirdik:<br>
+        •⁠  ⁠<b>Ekonomik Göstergeler:</b> Fiyatlarla yüksek korelasyona sahip olan ancak modelin genelleme yeteneğini düşürebilecek bazı ekonomik göstergeleri veri setimizden çıkardık.<br>
+        •⁠  ⁠<b>Ülke Değişkeni:</b> Ülke değişkeninin iptal oranları üzerinde belirgin bir etkisi varken, günlük fiyat ortalamaları üzerinde istatistiksel olarak anlamlı bir etkisi olmadığını tespit ederek bu değişkeni model dışında bıraktık.<br>
+        •⁠  ⁠<b>Gruplandırma Stratejisi:</b> Yüzlerce farklı acente, oda tipi, yemek seçeneği ve ekstra özelliği, ortalama oda fiyatı üzerindeki etkilerine göre anlamlı gruplara ayırarak veri setimizi daha kullanışlı ve işlenebilir hale getirdik. Örneğin, aylardan ziyade mevsimlerin fiyatlandırma üzerinde daha etkili olduğunu gözlemledik ve yaklaşık 500 acentayı 5 ana grupta sınıflandırdık.
+    </div>
+    <div style="background-color:#d5f5e3; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>Model Geliştirme ve Optimizasyon</b><br>
+        Verilerimizi hazırladıktan sonra, en iyi performansı verecek modeli bulmak için birden fazla regresyon algoritmasını test ettik. İlk denemelerimizde KNN (K-En Yakın Komşu) ve XGBoost modellerinin en umut verici sonuçları verdiğini gördük.<br>
+        İlk model denemelerimizin ardından, sonuç üzerinde etkisi az olduğunu tespit ettiğimiz bazı değişkenleri de modelden çıkardık.<br>
+        Model başarısını daha da artırmak için bu iki güçlü model üzerinde hiperparametre optimizasyonu uyguladık. Bu sayede, başlangıçda hata payı yüksek olan modellerimizin performansını önemli ölçüde iyileştirdik ve tahmin doğruluğunu en üst seviyeye çıkardık.
+    </div>
+    """,unsafe_allow_html=True)
 
+    # Model geliştirme açıklamasının hemen altına görselleri ekle
+    st.image("test_skor.jpeg", caption="Regresyon Modelleri Test Skorları", use_container_width=True)
+    st.image("knnvsxgb.jpeg", caption="KNN vs XGBoost Model Karşılaştırması", use_container_width=True)
+
+    st.markdown("""
+    <div style="background-color:#fcf3cf; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>Sonuç ve İş Faydası</b><br>
+        Elde ettiğimiz optimize edilmiş model, artık yeni bir rezervasyon verisi girildiğinde, otel için en uygun ortalama günlük fiyatı doğru bir şekilde tahmin edebilmektedir. Bu uygulama sayesinde otel yöneticileri, içgüdüsel kararlar yerine veriye dayalı fiyatlandırma stratejileri geliştirerek gelirlerini maksimize edebilirler.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <b>Kullanılan Model:</b> <span style="color:#27ae60;">XGBoost Regressor</span><br>
+    <b>Model, rezervasyonun ortalama günlük fiyatını (ADR) tahmin etmek için eğitilmiştir.</b><br><br>
+    """, unsafe_allow_html=True)
+    
     final_xgb_model = joblib.load("final_xgb_model.pkl")
+
+    # Özellik önem grafiğini göster
+    #st.markdown("Model Özellik Önem Grafiği")
+    fig = plotly_feature_importance_streamlit(final_xgb_model, X_regression, title="XGBoost Regressor Feature Importance")
+    st.plotly_chart(fig, use_container_width=True)
+    
+    st.markdown("""
+    <div style="background-color:#fcf3cf; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>💾 Dağıtım ve Kullanım</b><br>
+        Nihai XGBoost Regressor modeli ve veri ölçekleyici (<b>final_xgb_model.pkl</b> ve <b>scaler_adr.pkl</b>) dosyaya kaydedilmiştir. Böylece, yeni rezervasyon verileriyle gerçek zamanlı ADR tahmini yapmak mümkündür.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("Aşağıdaki formu doldurarak ADR tahmini alabilirsiniz.")
 
     # Sol sütun
     col1, col2 = st.columns(2)
@@ -592,41 +640,42 @@ elif page == "💰 ADR Prediction":
         input_scaled = scaler_adr.transform(input_df)
         prediction = final_xgb_model.predict(input_scaled)
         st.success(f"Tahmin edilen ADR: {prediction[0]:.2f}")   
-    st.markdown("""
-    <b>Kullanılan Model:</b> <span style="color:#27ae60;">XGBoost Regressor</span><br>
-    <b>Model, rezervasyonun ortalama günlük fiyatını (ADR) tahmin etmek için eğitilmiştir.</b><br><br>
-    """, unsafe_allow_html=True)
-    
-    # Özellik önem grafiğini göster
-    #st.markdown("Model Özellik Önem Grafiği")
-    fig = plotly_feature_importance_streamlit(final_xgb_model, X_regression, title="XGBoost Regressor Feature Importance")
-    st.plotly_chart(fig, use_container_width=True)
+
 
      
 #İptal tahmini
-elif page == "❌ Cancellation Prediction":
-    st.header("❌ Rezervasyon İptal Tahmini")
-    
+elif page == "📅❌ Cancellation Prediction":
+    st.header("📅❌ Rezervasyon İptal Tahmini")
+
+    # Post-it tarzı bloklar
     st.markdown("""
-    #### 💻 Model Oluşturma: Veriden Tahmine
-    Veriler titizlikle hazırlandıktan ve özellik mühendisliği yapıldıktan sonra, bir sonraki adım tahmin modelini oluşturmaktı. Buradaki amaç, bir rezervasyonun iptal edilme olasılığını doğru bir şekilde tahmin edebilecek bir sınıflandırıcıyı eğitmektir.
+    <div style="background-color:#f9e79f; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>💻 Model Oluşturma: Veriden Tahmine</b><br>
+        Veriler titizlikle hazırlandıktan ve özellik mühendisliği yapıldıktan sonra, bir sonraki adım tahmin modelini oluşturmaktı. Buradaki amaç, bir rezervasyonun iptal edilme olasılığını doğru bir şekilde tahmin edebilecek bir sınıflandırıcıyı eğitmektir.
+    </div>
+    <div style="background-color:#aed6f1; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>🚀 Temel Modeller ve Performans Değerlendirmesi</b><br>
+        Nihai bir modele karar vermeden önce, en iyi performansı gösteren algoritmayı bulmak için çeşitli yaygın makine öğrenimi sınıflandırma algoritmaları değerlendirildi. Her modelin performansı, bu tür dengesiz sınıflandırma problemlerinde anahtar bir ölçüt olan ROC AUC kullanılarak ölçüldü.<br>
+        <b>Test Edilen Temel Modeller:</b> Lojistik Regresyon, KNN, RF, CART, XGBoost ve LightGBM.<br>
+    </div>
+    <div style="background-color:#d5f5e3; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>⚙️ Optimal Performans için Hiperparametre Ayarı</b><br>
+        Başlangıç Değerlendirmesi: Her modelin varsayılan ayarlarıyla, cross_validate kullanarak bir başlangıç performansı (örneğin, ortalama roc_auc skoru) hesaplanır. Bu, modelin ayar yapılmadan önceki durumunu görmenizi sağlar.<br><br>
+        Grid Search: Daha sonra, GridSearchCV aracıyla her model için önceden belirlenen hiperparametre kombinasyonları (params içinde) sistematik olarak denenir. Bu süreç, en yüksek performansı veren hiperparametre setini bulana kadar her bir kombinasyonu çapraz doğrulama ile test eder.<br><br>
+        Son Değerlendirme: En iyi hiperparametreler bulunduktan sonra, model bu yeni parametrelerle tekrar eğitilir ve performansı yeniden değerlendirilir. Bu, modelin ayarlandıktan sonraki başarısını gösterir.<br><br>
+        En İyi Modelleri Kaydetme: Her model için bulunan en iyi hiperparametreler ve bu parametrelerle eğitilen nihai modeller, best_models sözlüğüne kaydedilir.
+    </div>
+        <div style="background-color:#f2f4f4; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>🔧 Random Forest En İyi Parametreler</b><br>
+        <ul>
+            <li><b>max_depth:</b> 8</li>
+            <li><b>max_features:</b> 5</li>
+            <li><b>min_samples_split:</b> 20</li>
+            <li><b>n_estimators:</b> 300</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-    #### 🚀 Temel Modeller ve Performans Değerlendirmesi
-    Nihai bir modele karar vermeden önce, en iyi performansı gösteren algoritmayı bulmak için çeşitli yaygın makine öğrenimi sınıflandırma algoritmaları değerlendirildi. Her modelin performansı, bu tür dengesiz sınıflandırma problemlerinde anahtar bir ölçüt olan ROC AUC kullanılarak ölçüldü.
-
-    **Test Edilen Temel Modeller:** Lojistik Regresyon, KNN, Karar Ağacı, CART, XGBoost ve LightGBM.
-
-    **Model Seçimi:** Çapraz doğrulama (cross-validation) sonuçlarına göre, RF üstün performans gösterdi.
-
-    #### ⚙️ Optimal Performans için Hiperparametre Ayarı
-    GBM modelinin başlangıç versiyonu, daha da iyi sonuçlar elde etmek için ince ayar yapıldı. Hiperparametre ayarı adı verilen bu süreç, modelin performansını en üst düzeye çıkaran kombinasyonu bulmak için parametrelerinin (learning_rate, max_depth, n_estimators, subsample gibi) farklı konfigürasyonlarını sistematik olarak test etmeyi içerir.
-
-    **Ayar Tekniği:** Belirlenen bir parametre ızgarasını (grid) kapsamlı bir şekilde arayan bir Grid Search kullanıldı.
-
-    **Nihai Model:** Optimize edilmiş Random Forest modeli, performans metriklerinde (doğruluk, F1-skoru ve ROC AUC) önemli bir artış göstererek etkinliğini doğruladı.
-
-    """,unsafe_allow_html=True)
-    
     # Add this code to the "❌ Cancellation Prediction" section in resort.py
 
     #st.markdown("Model Performans Karşılaştırması (ROC AUC)")
@@ -663,17 +712,13 @@ elif page == "❌ Cancellation Prediction":
     st.plotly_chart(fig, use_container_width=True)
     
     st.markdown("""
-    ### 📊 Özellik Önem Derecesi: İptale en çok katkı sağlayan faktörler nelerdir?
-    Modelin hangi özelliklere güvendiğini anlamak, yorumlanabilirlik açısından çok önemlidir. İptalleri tahmin etmede en etkili faktörleri belirlemek için modelin özellik önem derecesi analizi yapıldı.
-
-    Bu görselleştirme, total_guests, lead_time, adr gibi özelliklerin ve yeni oluşturulan TrustedAgent ve Country_Risk değişkenlerinin, otel rezervasyon iptallerini tahmin etmek için en güçlü göstergeler arasında yer aldığını ortaya koymaktadır.
-    """,unsafe_allow_html=True)
-    
-    st.markdown("""
-    <b>Kullanılan Model:</b> <span style="color:#2980b9;">Random Forest Classifier</span><br>
-    <b>Model, rezervasyonun iptal edilip edilmeyeceğini tahmin etmek için eğitilmiştir.</b>
+    <div style="background-color:#f5eef8; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>📊 Özellik Önem Derecesi: İptale en çok katkı sağlayan faktörler nelerdir?</b><br>
+        Modelin hangi özelliklere güvendiğini anlamak, yorumlanabilirlik açısından çok önemlidir. İptalleri tahmin etmede en etkili faktörleri belirlemek için modelin özellik önem derecesi analizi yapıldı.<br>
+        Bu görselleştirme, <b>total_guests, lead_time, adr</b> gibi özelliklerin ve yeni oluşturulan <b>TrustedAgent</b> ve <b>Country_Risk</b> değişkenlerinin, otel rezervasyon iptallerini tahmin etmek için en güçlü göstergeler arasında yer aldığını ortaya koymaktadır.
+    </div>
     """, unsafe_allow_html=True)
-
+    
     # Özellik önem grafiğini göster
     #st.markdown("Model Özellik Önem Grafiği")
     fig = plotly_feature_importance_streamlit(rf_model, X_classification, title="Random Forest Classifier Feature Importance")
@@ -681,8 +726,10 @@ elif page == "❌ Cancellation Prediction":
 
 
     st.markdown("""
-    ### 💾 Dağıtım ve Ölçeklenebilirlik
-    Pratik uygulama için, nihai optimize edilmiş Random Forest modeli ve veri ölçekleyici (rf_model.pkl ve scaler.pkl) bir dosyaya kaydedildi. Bu, modelin yeniden eğitilmesine gerek kalmadan yeni, gerçek zamanlı rezervasyon verileri üzerinde tahmin yapmak için kolayca yüklenip kullanılabilmesini sağlar.
+    <div style="background-color:#fcf3cf; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>💾 Dağıtım ve Ölçeklenebilirlik</b><br>
+        Pratik uygulama için, nihai optimize edilmiş Random Forest modeli ve veri ölçekleyici (<b>rf_model.pkl</b> ve <b>scaler.pkl</b>) bir dosyaya kaydedildi. Bu, modelin yeniden eğitilmesine gerek kalmadan yeni, gerçek zamanlı rezervasyon verileri üzerinde tahmin yapmak için kolayca yüklenip kullanılabilmesini sağlar.
+    </div>
     """, unsafe_allow_html=True)
 
 
@@ -801,7 +848,7 @@ elif page == "❌ Cancellation Prediction":
             st.success(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}")
         else:
             st.error(f"Ziyaretçinin iptal etme olasılığı %{cancel_risk}") 
-
+    
 #Özellik Müh.
 elif page == "🛠️ Feature Engineering":
     st.header("🛠️ Veri Ön İşleme ve Özellik Mühendisliği")
@@ -885,41 +932,26 @@ elif page == "🛠️ Feature Engineering":
 
 #İçgörüler ve Öneriler
 elif page == "💡 Insights and Recommendations":
-    st.header("💡 Bulgular ve İş Önerileri")
+    st.header("💡 Bulgular ve Öneriler")
 
     st.markdown("""
-    ### Key Insights from Analysis
-
-    - **High Cancellation Risk:** Certain market segments and countries show significantly higher cancellation rates. Proactive communication and flexible policies may reduce risk.
-    - **Seasonal Trends:** Bookings and cancellations vary by season. Summer months have higher booking volumes, but also increased cancellation risk.
-    - **ADR Optimization:** Dynamic pricing strategies based on lead time, guest profile, and season can help maximize revenue.
-    - **Guest Profile:** Families (with children) tend to book longer stays and are less likely to cancel compared to solo travelers.
-    - **Special Requests:** Bookings with special requests have a lower cancellation rate, indicating higher commitment.
-
-    ### Recommendations
-
-    1. **Targeted Offers:** Provide special incentives for guests from high-risk countries or segments to reduce cancellations.
-    2. **Flexible Policies:** Consider more flexible cancellation policies during low-demand periods to attract bookings.
-    3. **Dynamic Pricing:** Use ADR prediction model outputs to adjust prices based on demand, season, and guest characteristics.
-    4. **Monitor Lead Time:** Closely monitor bookings with short lead times, as these are more likely to be canceled.
-    5. **Leverage Feature Importance:** Focus marketing and operational efforts on the most influential features identified by the models.
-
-    ---
-    <span style="color:#2980b9;">For further details, see the EDA and Feature Engineering tabs.</span>
+    <div style="background-color:#f9e79f; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>1. Müşteri Segmentasyonuna Dayalı Dinamik Stratejiler</b><br>
+        <b>Risk Bazlı Rezervasyon Politikaları:</b> Müşterileri iptal riski yüksek (örneğin, daha önce iptal geçmişi olan veya riskli ülkelerden gelen) ve düşük olanlar olarak segmente edin. Yüksek riskli müşteriler için iade edilemez (non-refundable) rezervasyon seçeneklerini ön plana çıkarın veya ön ödeme talep edin.<br><br>
+        <b>Acenta Ortaklıklarının Optimizasyonu:</b> Acentaların performansını ülke ve iptal oranlarına göre analiz edin. Yüksek riskli pazarlardaki acentalarla çalışırken, rezervasyon güvencesini artıracak özel anlaşmalar yapın.<br><br>
+        <b>Kişiselleştirilmiş İletişim:</b> Segmentlere özel iletişim stratejileri geliştirin. Örneğin, sadık müşterilere özel erken rezervasyon fırsatları sunarak bağlılığı artırın.
+    </div>
+    <div style="background-color:#aed6f1; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>2. Veriye Dayalı Fiyatlandırma ve Gelir Yönetimi</b><br>
+        <b>Talep Odaklı Fiyatlandırma (ADR):</b> Modelden elde edilen fiyat tahminlerini kullanarak, doluluk oranlarını maksimize edecek dinamik fiyatlandırma politikaları oluşturun. Düşük talep dönemlerinde rekabetçi fiyatlar sunarak geliri artırın.<br><br>
+        <b>Mevsimsel ve Etkinlik Bazlı Promosyonlar:</b> Şehir otellerinin yaz aylarındaki doluluk oranını artırmak için iş seyahati dışı bireysel tatilcileri hedefleyen özel promosyonlar veya kampanyalar düzenleyin.<br><br>
+        <b>Operasyonel Verimlilik:</b> Tahmin modelleriyle, gelecekteki iptal ve doluluk oranlarını öngörerek personel ve kaynak planlamasını daha etkin hale getirin.
+    </div>
+    <div style="background-color:#d5f5e3; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <b>3. Operasyonel Mükemmellik İçin Öngörüler</b><br>
+        <b>Proaktif İletişim Stratejileri:</b> lead_time (rezervasyondan kalışa kadar geçen süre) yüksek olan rezervasyonlar için iptal riskini düşürmek amacıyla konaklama öncesi hatırlatma veya ek hizmet teklifleri gibi proaktif iletişimler kurun.<br><br>
+        <b>Kapasite Planlaması:</b> Belirli dönemlerde iptal oranlarının artacağını öngörerek, fazla rezervasyon (overbooking) stratejilerini daha güvenli bir şekilde yönetin.<br><br>
+        <b>Pazarlama ve Satış Faaliyetlerinin Yönlendirilmesi:</b> En yüksek iptal riskine sahip müşteri veya pazar segmentlerini belirleyerek, pazarlama bütçesini daha yüksek dönüşüm oranına sahip alanlara kaydırın.
+    </div>
     """, unsafe_allow_html=True)
-
-elif page == "📑 Appendix":
-    st.header("📑 Appendix")
-
-    st.markdown("### Country & Country Risk Table")
-
-    # Tabloyu yükle
-    df = pd.read_csv("hotel_bookings_preprocessed.csv")
-    country_table = df[["country", "Country_Risk"]].drop_duplicates().sort_values("Country_Risk").reset_index(drop=True)
-
-    st.dataframe(country_table, use_container_width=True)
-
-
-
-st.sidebar.markdown("---")
 
